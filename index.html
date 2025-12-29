@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔑 가설파트너 라이선스 관리</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div id="app" class="container mx-auto px-4 py-8 max-w-6xl">
+    
+    <!-- 헤더 -->
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">🔑 가설파트너 라이선스 관리</h1>
+      <p class="text-gray-600">시스템비계/동바리 라이선스 발급 및 관리</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- 발급 폼 -->
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <h2 class="text-xl font-bold mb-6 text-gray-800">✨ 새 라이선스 발급</h2>
+        
+        <form id="licenseForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">고객명 *</label>
+            <input type="text" id="customer_name" required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+              placeholder="홍길동">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">회사명</label>
+            <input type="text" id="company_name"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+              placeholder="(주)가설건설">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">하드웨어 ID *</label>
+            <input type="text" id="hardware_id" required maxlength="16"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none font-mono uppercase"
+              placeholder="A1B2C3D4E5F6G7H8"
+              oninput="this.value = this.value.toUpperCase()">
+            <p class="text-xs text-gray-500 mt-1">16자리 영숫자 (고객 프로그램에서 확인)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+            <input type="tel" id="customer_phone"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+              placeholder="010-1234-5678">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+            <input type="email" id="customer_email"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+              placeholder="customer@email.com">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">제품 유형</label>
+            <select id="product_type"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none">
+              <option value="all">전체 (비계+동바리)</option>
+              <option value="scaffold">시스템비계만</option>
+              <option value="shoring">시스템동바리만</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">메모</label>
+            <textarea id="notes" rows="2"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+              placeholder="특이사항 메모"></textarea>
+          </div>
+
+          <button type="submit"
+            class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg">
+            🔑 라이선스 발급
+          </button>
+        </form>
+      </div>
+
+      <!-- 목록 -->
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold text-gray-800">
+            📋 발급 목록 <span id="licenseCount" class="text-sm font-normal text-gray-500">(0건)</span>
+          </h2>
+          
+          <div class="flex gap-2">
+            <input type="text" id="searchInput" placeholder="검색..."
+              class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+            <button onclick="loadLicenses()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">🔍</button>
+            <button onclick="loadLicenses()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">🔄</button>
+          </div>
+        </div>
+
+        <div id="licenseList" class="overflow-x-auto">
+          <p class="text-center text-gray-500 py-8">로딩 중...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 발급 완료 모달 -->
+    <div id="modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div class="text-center">
+          <div class="text-6xl mb-4">🎉</div>
+          <h3 class="text-2xl font-bold mb-2">라이선스 발급 완료!</h3>
+          <p class="text-gray-600 mb-6">아래 라이선스 키를 고객에게 전달하세요.</p>
+          
+          <div class="bg-gray-100 rounded-xl p-4 mb-6">
+            <code id="generatedKey" class="text-2xl font-bold text-green-600"></code>
+          </div>
+          
+          <div class="flex gap-3">
+            <button onclick="copyKey()" class="flex-1 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600">
+              📋 복사
+            </button>
+            <button onclick="closeModal()" class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
+              닫기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Supabase 설정
+    const SUPABASE_URL = 'https://uyrbyahnudzkptmnxwdi.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_OOctZqKX0pky_tWpV_xNAA_xuIego1Z';
+    
+    // 라이선스 키 생성 시크릿
+    const SECRET = 'GASEOL_PARTNER_2025';
+    
+    // Supabase 클라이언트
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // 라이선스 키 생성
+    async function generateLicenseKey(hardwareId) {
+      const normalized = hardwareId.trim().toUpperCase();
+      const data = new TextEncoder().encode(normalized + SECRET);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const key = hashHex.substring(0, 16).toUpperCase();
+      return key.match(/.{4}/g).join('-');
+    }
+    
+    // 라이선스 목록 로드
+    async function loadLicenses() {
+      const search = document.getElementById('searchInput').value;
+      
+      try {
+        let query = db
+          .from('licenses')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (search) {
+          query = query.or(`customer_name.ilike.%${search}%,hardware_id.ilike.%${search}%,company_name.ilike.%${search}%`);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        document.getElementById('licenseCount').textContent = `(${data.length}건)`;
+        
+        if (data.length === 0) {
+          document.getElementById('licenseList').innerHTML = '<p class="text-center text-gray-500 py-8">발급된 라이선스가 없습니다.</p>';
+          return;
+        }
+        
+        let html = `
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-left">
+                <th class="py-3 px-2">고객</th>
+                <th class="py-3 px-2">하드웨어 ID</th>
+                <th class="py-3 px-2">라이선스 키</th>
+                <th class="py-3 px-2">제품</th>
+                <th class="py-3 px-2">상태</th>
+                <th class="py-3 px-2">발급일</th>
+                <th class="py-3 px-2">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        data.forEach(license => {
+          const productLabel = license.product_type === 'all' ? '전체' : 
+                              license.product_type === 'scaffold' ? '비계' : '동바리';
+          const productColor = license.product_type === 'all' ? 'bg-purple-100 text-purple-800' : 
+                              license.product_type === 'scaffold' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800';
+          
+          html += `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+              <td class="py-3 px-2">
+                <div class="font-medium">${license.customer_name}</div>
+                ${license.company_name ? `<div class="text-xs text-gray-500">${license.company_name}</div>` : ''}
+              </td>
+              <td class="py-3 px-2">
+                <code class="text-xs bg-gray-100 px-2 py-1 rounded">${license.hardware_id}</code>
+              </td>
+              <td class="py-3 px-2">
+                <div class="flex items-center gap-1">
+                  <code class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-bold">${license.license_key}</code>
+                  <button onclick="copyToClipboard('${license.license_key}')" class="text-gray-400 hover:text-gray-600" title="복사">📋</button>
+                </div>
+              </td>
+              <td class="py-3 px-2">
+                <span class="text-xs px-2 py-1 rounded ${productColor}">${productLabel}</span>
+              </td>
+              <td class="py-3 px-2">
+                <button onclick="toggleActive('${license.id}', ${license.is_active})" 
+                  class="text-xs px-2 py-1 rounded ${license.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                  ${license.is_active ? '✅ 활성' : '❌ 비활성'}
+                </button>
+              </td>
+              <td class="py-3 px-2 text-xs text-gray-500">
+                ${new Date(license.created_at).toLocaleDateString('ko-KR')}
+              </td>
+              <td class="py-3 px-2">
+                <button onclick="deleteLicense('${license.id}')" class="text-red-500 hover:text-red-700 text-xs">🗑️</button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        html += '</tbody></table>';
+        document.getElementById('licenseList').innerHTML = html;
+        
+      } catch (error) {
+        console.error('로드 실패:', error);
+        document.getElementById('licenseList').innerHTML = `<p class="text-center text-red-500 py-8">오류: ${error.message}</p>`;
+      }
+    }
+    
+    // 라이선스 발급
+    document.getElementById('licenseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const customer_name = document.getElementById('customer_name').value;
+      const hardware_id = document.getElementById('hardware_id').value.toUpperCase();
+      const company_name = document.getElementById('company_name').value;
+      const customer_phone = document.getElementById('customer_phone').value;
+      const customer_email = document.getElementById('customer_email').value;
+      const product_type = document.getElementById('product_type').value;
+      const notes = document.getElementById('notes').value;
+      
+      if (hardware_id.length !== 16) {
+        alert('하드웨어 ID는 16자리여야 합니다.');
+        return;
+      }
+      
+      try {
+        // 중복 체크
+        const { data: existing } = await db
+          .from('licenses')
+          .select('id')
+          .eq('hardware_id', hardware_id)
+          .single();
+        
+        if (existing) {
+          alert('이미 등록된 하드웨어 ID입니다.');
+          return;
+        }
+        
+        // 라이선스 키 생성
+        const license_key = await generateLicenseKey(hardware_id);
+        
+        // DB 저장
+        const { error } = await db
+          .from('licenses')
+          .insert({
+            customer_name,
+            hardware_id,
+            license_key,
+            company_name: company_name || null,
+            customer_phone: customer_phone || null,
+            customer_email: customer_email || null,
+            product_type,
+            notes: notes || null,
+            is_active: true
+          });
+        
+        if (error) throw error;
+        
+        // 모달 표시
+        document.getElementById('generatedKey').textContent = license_key;
+        document.getElementById('modal').classList.remove('hidden');
+        
+        // 폼 초기화
+        document.getElementById('licenseForm').reset();
+        
+        // 목록 새로고침
+        loadLicenses();
+        
+      } catch (error) {
+        console.error('발급 오류:', error);
+        alert('오류가 발생했습니다: ' + error.message);
+      }
+    });
+    
+    // 활성/비활성 토글
+    async function toggleActive(id, currentStatus) {
+      try {
+        const { error } = await db
+          .from('licenses')
+          .update({ is_active: !currentStatus })
+          .eq('id', id);
+        
+        if (error) throw error;
+        loadLicenses();
+      } catch (error) {
+        alert('오류가 발생했습니다.');
+      }
+    }
+    
+    // 라이선스 삭제
+    async function deleteLicense(id) {
+      if (!confirm('정말 삭제하시겠습니까?')) return;
+      
+      try {
+        const { error } = await db
+          .from('licenses')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        loadLicenses();
+      } catch (error) {
+        alert('오류가 발생했습니다.');
+      }
+    }
+    
+    // 클립보드 복사
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert('복사되었습니다!');
+    }
+    
+    function copyKey() {
+      const key = document.getElementById('generatedKey').textContent;
+      navigator.clipboard.writeText(key);
+      alert('복사되었습니다!');
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
+    
+    // 검색 엔터키
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loadLicenses();
+    });
+    
+    // 페이지 로드 시 목록 로드
+    loadLicenses();
+  </script>
+</body>
+</html>
