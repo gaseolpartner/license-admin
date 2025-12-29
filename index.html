@@ -6,106 +6,245 @@
   <title>🔑 가설파트너 라이선스 관리</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
   <div id="app" class="container mx-auto px-4 py-8 max-w-6xl">
     
     <!-- 헤더 -->
-    <div class="mb-8 text-center">
+    <div class="mb-6 text-center">
       <h1 class="text-3xl font-bold text-gray-800 mb-2">🔑 가설파트너 라이선스 관리</h1>
-      <p class="text-gray-600">시스템비계/동바리 라이선스 발급 및 관리</p>
+      <p class="text-gray-600">스케치업 플러그인 / 노무대장 라이선스 발급 및 관리</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- 발급 폼 -->
-      <div class="bg-white rounded-2xl shadow-lg p-6">
-        <h2 class="text-xl font-bold mb-6 text-gray-800">✨ 새 라이선스 발급</h2>
+    <!-- 탭 버튼 -->
+    <div class="flex justify-center mb-6">
+      <div class="bg-white rounded-xl p-1 shadow-lg inline-flex gap-1">
+        <button onclick="switchTab('sketchup')" id="tab-sketchup" class="tab-btn active px-6 py-3 rounded-lg font-bold transition-all">
+          🏗️ 스케치업 플러그인
+        </button>
+        <button onclick="switchTab('nomu')" id="tab-nomu" class="tab-btn px-6 py-3 rounded-lg font-bold transition-all hover:bg-gray-100">
+          📋 노무대장
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- 스케치업 플러그인 탭 -->
+    <!-- ============================================== -->
+    <div id="content-sketchup" class="tab-content active">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <form id="licenseForm" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">고객명 *</label>
-            <input type="text" id="customer_name" required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-              placeholder="홍길동">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">회사명</label>
-            <input type="text" id="company_name"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-              placeholder="(주)가설건설">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">하드웨어 ID *</label>
-            <input type="text" id="hardware_id" required maxlength="16"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none font-mono uppercase"
-              placeholder="A1B2C3D4E5F6G7H8"
-              oninput="this.value = this.value.toUpperCase()">
-            <p class="text-xs text-gray-500 mt-1">16자리 영숫자 (고객 프로그램에서 확인)</p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">연락처</label>
-            <input type="tel" id="customer_phone"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-              placeholder="010-1234-5678">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-            <input type="email" id="customer_email"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-              placeholder="customer@email.com">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">제품 유형</label>
-            <select id="product_type"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none">
-              <option value="all">전체 (비계+동바리)</option>
-              <option value="scaffold">시스템비계만</option>
-              <option value="shoring">시스템동바리만</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">메모</label>
-            <textarea id="notes" rows="2"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-              placeholder="특이사항 메모"></textarea>
-          </div>
-
-          <button type="submit"
-            class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg">
-            🔑 라이선스 발급
-          </button>
-        </form>
-      </div>
-
-      <!-- 목록 -->
-      <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-gray-800">
-            📋 발급 목록 <span id="licenseCount" class="text-sm font-normal text-gray-500">(0건)</span>
-          </h2>
+        <!-- 발급 폼 -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h2 class="text-xl font-bold mb-6 text-gray-800">✨ 새 라이선스 발급</h2>
           
-          <div class="flex gap-2">
-            <input type="text" id="searchInput" placeholder="검색..."
-              class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-            <button onclick="loadLicenses()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">🔍</button>
-            <button onclick="loadLicenses()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">🔄</button>
-          </div>
+          <form id="licenseForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">고객명 *</label>
+              <input type="text" id="customer_name" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                placeholder="홍길동">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">회사명</label>
+              <input type="text" id="company_name"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                placeholder="(주)가설건설">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">하드웨어 ID *</label>
+              <input type="text" id="hardware_id" required maxlength="16"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none font-mono uppercase"
+                placeholder="A1B2C3D4E5F6G7H8"
+                oninput="this.value = this.value.toUpperCase()">
+              <p class="text-xs text-gray-500 mt-1">16자리 영숫자 (고객 프로그램에서 확인)</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+              <input type="tel" id="customer_phone"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                placeholder="010-1234-5678">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+              <input type="email" id="customer_email"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                placeholder="customer@email.com">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">제품 유형</label>
+              <select id="product_type"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none">
+                <option value="all">전체 (비계+동바리)</option>
+                <option value="scaffold">시스템비계만</option>
+                <option value="shoring">시스템동바리만</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">메모</label>
+              <textarea id="notes" rows="2"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                placeholder="특이사항 메모"></textarea>
+            </div>
+
+            <button type="submit"
+              class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg">
+              🔑 라이선스 발급
+            </button>
+          </form>
         </div>
 
-        <div id="licenseList" class="overflow-x-auto">
-          <p class="text-center text-gray-500 py-8">로딩 중...</p>
+        <!-- 목록 -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">
+              📋 발급 목록 <span id="licenseCount" class="text-sm font-normal text-gray-500">(0건)</span>
+            </h2>
+            
+            <div class="flex gap-2">
+              <input type="text" id="searchInput" placeholder="검색..."
+                class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+              <button onclick="loadLicenses()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">🔄</button>
+            </div>
+          </div>
+
+          <div id="licenseList" class="overflow-x-auto">
+            <p class="text-center text-gray-500 py-8">로딩 중...</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 발급 완료 모달 -->
+    <!-- ============================================== -->
+    <!-- 노무대장 탭 -->
+    <!-- ============================================== -->
+    <div id="content-nomu" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 노무대장 발급 폼 -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h2 class="text-xl font-bold mb-6 text-gray-800">✨ 노무대장 라이선스 발급</h2>
+          
+          <form id="nomuLicenseForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">회사명 *</label>
+              <input type="text" id="nomu_company_name" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                placeholder="(주)가설건설">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">사용자명 *</label>
+              <input type="text" id="nomu_user_name" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                placeholder="홍길동">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+              <input type="tel" id="nomu_phone"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                placeholder="010-1234-5678">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+              <input type="email" id="nomu_email"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                placeholder="customer@email.com">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">라이선스 타입</label>
+              <select id="nomu_license_type" onchange="updateNomuDuration()"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                <option value="monthly">월간 (30일)</option>
+                <option value="yearly">연간 (365일)</option>
+                <option value="permanent">영구</option>
+              </select>
+            </div>
+
+            <div id="nomu_duration_group">
+              <label class="block text-sm font-medium text-gray-700 mb-1">기간 (일)</label>
+              <input type="number" id="nomu_duration" value="30" min="1"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">메모</label>
+              <textarea id="nomu_notes" rows="2"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                placeholder="특이사항 메모"></textarea>
+            </div>
+
+            <button type="submit"
+              class="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-lg">
+              🔑 라이선스 발급
+            </button>
+          </form>
+        </div>
+
+        <!-- 노무대장 목록 -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">
+              📋 노무대장 라이선스 <span id="nomuLicenseCount" class="text-sm font-normal text-gray-500">(0건)</span>
+            </h2>
+            
+            <div class="flex gap-2">
+              <select id="nomuStatusFilter" onchange="loadNomuLicenses()" 
+                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none">
+                <option value="all">전체 상태</option>
+                <option value="active">활성</option>
+                <option value="pending">대기</option>
+                <option value="expired">만료</option>
+                <option value="revoked">취소</option>
+              </select>
+              <input type="text" id="nomuSearchInput" placeholder="검색..."
+                class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+              <button onclick="loadNomuLicenses()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">🔄</button>
+            </div>
+          </div>
+
+          <!-- 통계 카드 -->
+          <div class="grid grid-cols-4 gap-3 mb-6">
+            <div class="bg-gray-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-total" class="text-2xl font-bold text-gray-700">0</div>
+              <div class="text-xs text-gray-500">전체</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-active" class="text-2xl font-bold text-green-600">0</div>
+              <div class="text-xs text-gray-500">활성</div>
+            </div>
+            <div class="bg-yellow-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-pending" class="text-2xl font-bold text-yellow-600">0</div>
+              <div class="text-xs text-gray-500">대기</div>
+            </div>
+            <div class="bg-red-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-expired" class="text-2xl font-bold text-red-600">0</div>
+              <div class="text-xs text-gray-500">만료</div>
+            </div>
+          </div>
+
+          <div id="nomuLicenseList" class="overflow-x-auto">
+            <p class="text-center text-gray-500 py-8">로딩 중...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 발급 완료 모달 (스케치업) -->
     <div id="modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
       <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
         <div class="text-center">
@@ -129,21 +268,87 @@
       </div>
     </div>
 
+    <!-- 발급 완료 모달 (노무대장) -->
+    <div id="nomuModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div class="text-center">
+          <div class="text-6xl mb-4">🎉</div>
+          <h3 class="text-2xl font-bold mb-2">노무대장 라이선스 발급!</h3>
+          <p class="text-gray-600 mb-6">아래 라이선스 키를 고객에게 전달하세요.</p>
+          
+          <div class="bg-purple-50 rounded-xl p-4 mb-4">
+            <code id="nomuGeneratedKey" class="text-2xl font-bold text-purple-600"></code>
+          </div>
+          
+          <div id="nomuExpiryInfo" class="text-sm text-gray-600 mb-6"></div>
+          
+          <div class="flex gap-3">
+            <button onclick="copyNomuKey()" class="flex-1 py-3 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600">
+              📋 복사
+            </button>
+            <button onclick="closeNomuModal()" class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
+              닫기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PC 리셋 확인 모달 -->
+    <div id="resetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div class="text-center">
+          <div class="text-6xl mb-4">🔄</div>
+          <h3 class="text-2xl font-bold mb-2">PC 등록 해제</h3>
+          <p class="text-gray-600 mb-6">이 라이선스의 PC 등록을 해제하시겠습니까?<br>사용자가 새 PC에서 다시 활성화할 수 있습니다.</p>
+          
+          <div class="flex gap-3">
+            <button onclick="confirmResetMachine()" class="flex-1 py-3 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600">
+              해제하기
+            </button>
+            <button onclick="closeResetModal()" class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
+              취소
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
+    // ============================================
     // Supabase 설정
+    // ============================================
     const SUPABASE_URL = 'https://uyrbyahnudzkptmnxwdi.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_OOctZqKX0pky_tWpV_xNAA_xuIego1Z';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cmJ5YWhudWR6a3B0bW54d2RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTgxODcsImV4cCI6MjA4MTA3NDE4N30.oYto7MDhhfC6IovWfBUJzIsgA72YeFHJ82YM3gkskPo';
     
-    // 라이선스 키 생성 시크릿
     const SECRET = 'GASEOL_PARTNER_2025';
     
-    // Supabase 클라이언트
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    // 라이선스 키 생성
+    // ============================================
+    // 탭 전환
+    // ============================================
+    function switchTab(tab) {
+      // 버튼 스타일
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      
+      // 컨텐츠 표시
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(`content-${tab}`).classList.add('active');
+      
+      // 데이터 로드
+      if (tab === 'nomu') {
+        loadNomuLicenses();
+      }
+    }
+    
+    // ============================================
+    // 스케치업 라이선스 (기존)
+    // ============================================
     async function generateLicenseKey(hardwareId) {
       const normalized = hardwareId.trim().toUpperCase();
       const data = new TextEncoder().encode(normalized + SECRET);
@@ -154,7 +359,6 @@
       return key.match(/.{4}/g).join('-');
     }
     
-    // 라이선스 목록 로드
     async function loadLicenses() {
       const search = document.getElementById('searchInput').value;
       
@@ -244,7 +448,6 @@
       }
     }
     
-    // 라이선스 발급
     document.getElementById('licenseForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -262,7 +465,6 @@
       }
       
       try {
-        // 중복 체크
         const { data: existing } = await db
           .from('licenses')
           .select('id')
@@ -274,10 +476,8 @@
           return;
         }
         
-        // 라이선스 키 생성
         const license_key = await generateLicenseKey(hardware_id);
         
-        // DB 저장
         const { error } = await db
           .from('licenses')
           .insert({
@@ -294,14 +494,9 @@
         
         if (error) throw error;
         
-        // 모달 표시
         document.getElementById('generatedKey').textContent = license_key;
         document.getElementById('modal').classList.remove('hidden');
-        
-        // 폼 초기화
         document.getElementById('licenseForm').reset();
-        
-        // 목록 새로고침
         loadLicenses();
         
       } catch (error) {
@@ -310,7 +505,6 @@
       }
     });
     
-    // 활성/비활성 토글
     async function toggleActive(id, currentStatus) {
       try {
         const { error } = await db
@@ -325,7 +519,6 @@
       }
     }
     
-    // 라이선스 삭제
     async function deleteLicense(id) {
       if (!confirm('정말 삭제하시겠습니까?')) return;
       
@@ -342,7 +535,6 @@
       }
     }
     
-    // 클립보드 복사
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text);
       alert('복사되었습니다!');
@@ -358,12 +550,319 @@
       document.getElementById('modal').classList.add('hidden');
     }
     
-    // 검색 엔터키
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') loadLicenses();
     });
     
-    // 페이지 로드 시 목록 로드
+    // ============================================
+    // 노무대장 라이선스
+    // ============================================
+    function updateNomuDuration() {
+      const type = document.getElementById('nomu_license_type').value;
+      const durationGroup = document.getElementById('nomu_duration_group');
+      const durationInput = document.getElementById('nomu_duration');
+      
+      if (type === 'permanent') {
+        durationGroup.style.display = 'none';
+        durationInput.value = 36500;
+      } else if (type === 'yearly') {
+        durationGroup.style.display = 'block';
+        durationInput.value = 365;
+      } else {
+        durationGroup.style.display = 'block';
+        durationInput.value = 30;
+      }
+    }
+    
+    async function loadNomuLicenses() {
+      const search = document.getElementById('nomuSearchInput').value;
+      const statusFilter = document.getElementById('nomuStatusFilter').value;
+      
+      try {
+        let query = db
+          .from('nomu_licenses')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (statusFilter !== 'all') {
+          query = query.eq('status', statusFilter);
+        }
+        
+        if (search) {
+          query = query.or(`license_key.ilike.%${search}%,company_name.ilike.%${search}%,user_name.ilike.%${search}%`);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        // 통계 업데이트
+        const allData = await db.from('nomu_licenses').select('status');
+        if (allData.data) {
+          document.getElementById('nomu-stat-total').textContent = allData.data.length;
+          document.getElementById('nomu-stat-active').textContent = allData.data.filter(l => l.status === 'active').length;
+          document.getElementById('nomu-stat-pending').textContent = allData.data.filter(l => l.status === 'pending').length;
+          document.getElementById('nomu-stat-expired').textContent = allData.data.filter(l => l.status === 'expired').length;
+        }
+        
+        document.getElementById('nomuLicenseCount').textContent = `(${data.length}건)`;
+        
+        if (data.length === 0) {
+          document.getElementById('nomuLicenseList').innerHTML = '<p class="text-center text-gray-500 py-8">발급된 라이선스가 없습니다.</p>';
+          return;
+        }
+        
+        let html = `
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-left">
+                <th class="py-3 px-2">라이선스 키</th>
+                <th class="py-3 px-2">회사/사용자</th>
+                <th class="py-3 px-2">타입</th>
+                <th class="py-3 px-2">상태</th>
+                <th class="py-3 px-2">만료일</th>
+                <th class="py-3 px-2">PC</th>
+                <th class="py-3 px-2">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        data.forEach(license => {
+          const statusColors = {
+            pending: 'bg-yellow-100 text-yellow-800',
+            active: 'bg-green-100 text-green-800',
+            expired: 'bg-red-100 text-red-800',
+            revoked: 'bg-gray-100 text-gray-800'
+          };
+          const statusLabels = {
+            pending: '대기',
+            active: '활성',
+            expired: '만료',
+            revoked: '취소'
+          };
+          const typeLabels = {
+            monthly: '월간',
+            yearly: '연간',
+            permanent: '영구'
+          };
+          
+          // 남은 일수 계산
+          let daysRemaining = '';
+          if (license.expires_at) {
+            const now = new Date();
+            const expiry = new Date(license.expires_at);
+            const diff = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+            if (diff < 0) {
+              daysRemaining = `<span class="text-red-500">${Math.abs(diff)}일 경과</span>`;
+            } else if (diff <= 7) {
+              daysRemaining = `<span class="text-orange-500">${diff}일 남음</span>`;
+            } else {
+              daysRemaining = `<span class="text-green-500">${diff}일 남음</span>`;
+            }
+          } else {
+            daysRemaining = '<span class="text-gray-500">무제한</span>';
+          }
+          
+          html += `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+              <td class="py-3 px-2">
+                <div class="flex items-center gap-1">
+                  <code class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-bold">${license.license_key}</code>
+                  <button onclick="copyToClipboard('${license.license_key}')" class="text-gray-400 hover:text-gray-600">📋</button>
+                </div>
+              </td>
+              <td class="py-3 px-2">
+                <div class="font-medium">${license.company_name || '-'}</div>
+                <div class="text-xs text-gray-500">${license.user_name || '-'}</div>
+              </td>
+              <td class="py-3 px-2">
+                <span class="text-xs">${typeLabels[license.license_type] || license.license_type}</span>
+              </td>
+              <td class="py-3 px-2">
+                <span class="text-xs px-2 py-1 rounded ${statusColors[license.status]}">${statusLabels[license.status]}</span>
+              </td>
+              <td class="py-3 px-2 text-xs">
+                ${license.expires_at ? new Date(license.expires_at).toLocaleDateString('ko-KR') : '무제한'}<br>
+                ${daysRemaining}
+              </td>
+              <td class="py-3 px-2">
+                ${license.machine_id ? `
+                  <span class="text-green-500 text-xs">✅ 등록</span>
+                  <button onclick="showResetModal('${license.license_key}')" class="text-orange-500 hover:text-orange-700 text-xs ml-1" title="PC 해제">🔄</button>
+                ` : '<span class="text-gray-400 text-xs">미등록</span>'}
+              </td>
+              <td class="py-3 px-2">
+                <div class="flex gap-1">
+                  <button onclick="extendNomuLicense('${license.id}', 30)" class="text-blue-500 hover:text-blue-700 text-xs" title="+30일">➕</button>
+                  ${license.status !== 'revoked' ? `
+                    <button onclick="revokeNomuLicense('${license.id}')" class="text-red-500 hover:text-red-700 text-xs" title="취소">🚫</button>
+                  ` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        
+        html += '</tbody></table>';
+        document.getElementById('nomuLicenseList').innerHTML = html;
+        
+      } catch (error) {
+        console.error('로드 실패:', error);
+        document.getElementById('nomuLicenseList').innerHTML = `<p class="text-center text-red-500 py-8">오류: ${error.message}</p>`;
+      }
+    }
+    
+    // 노무대장 라이선스 발급
+    document.getElementById('nomuLicenseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const company_name = document.getElementById('nomu_company_name').value;
+      const user_name = document.getElementById('nomu_user_name').value;
+      const user_phone = document.getElementById('nomu_phone').value;
+      const user_email = document.getElementById('nomu_email').value;
+      const license_type = document.getElementById('nomu_license_type').value;
+      const duration = parseInt(document.getElementById('nomu_duration').value);
+      const notes = document.getElementById('nomu_notes').value;
+      
+      try {
+        const { data, error } = await db.rpc('generate_nomu_license', {
+          p_company_name: company_name,
+          p_user_name: user_name,
+          p_user_email: user_email || null,
+          p_user_phone: user_phone || null,
+          p_license_type: license_type,
+          p_duration_days: duration,
+          p_notes: notes || null
+        });
+        
+        if (error) throw error;
+        
+        if (data.success) {
+          document.getElementById('nomuGeneratedKey').textContent = data.license_key;
+          document.getElementById('nomuExpiryInfo').textContent = data.expires_at 
+            ? `만료일: ${new Date(data.expires_at).toLocaleDateString('ko-KR')}` 
+            : '영구 라이선스';
+          document.getElementById('nomuModal').classList.remove('hidden');
+          document.getElementById('nomuLicenseForm').reset();
+          loadNomuLicenses();
+        } else {
+          throw new Error(data.error || '발급 실패');
+        }
+        
+      } catch (error) {
+        console.error('발급 오류:', error);
+        alert('오류가 발생했습니다: ' + error.message);
+      }
+    });
+    
+    // 노무대장 라이선스 연장
+    async function extendNomuLicense(id, days) {
+      if (!confirm(`${days}일 연장하시겠습니까?`)) return;
+      
+      try {
+        // 현재 라이선스 조회
+        const { data: license, error: fetchError } = await db
+          .from('nomu_licenses')
+          .select('expires_at')
+          .eq('id', id)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const currentExpiry = license.expires_at ? new Date(license.expires_at) : new Date();
+        const newExpiry = new Date(currentExpiry);
+        newExpiry.setDate(newExpiry.getDate() + days);
+        
+        const { error } = await db
+          .from('nomu_licenses')
+          .update({ 
+            expires_at: newExpiry.toISOString(),
+            status: 'active'
+          })
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        alert(`${days}일 연장되었습니다.\n새 만료일: ${newExpiry.toLocaleDateString('ko-KR')}`);
+        loadNomuLicenses();
+        
+      } catch (error) {
+        console.error('연장 실패:', error);
+        alert('오류가 발생했습니다.');
+      }
+    }
+    
+    // 노무대장 라이선스 취소
+    async function revokeNomuLicense(id) {
+      if (!confirm('이 라이선스를 취소하시겠습니까?')) return;
+      
+      try {
+        const { error } = await db
+          .from('nomu_licenses')
+          .update({ status: 'revoked' })
+          .eq('id', id);
+        
+        if (error) throw error;
+        loadNomuLicenses();
+        
+      } catch (error) {
+        alert('오류가 발생했습니다.');
+      }
+    }
+    
+    // PC 리셋
+    let resetLicenseKey = '';
+    
+    function showResetModal(licenseKey) {
+      resetLicenseKey = licenseKey;
+      document.getElementById('resetModal').classList.remove('hidden');
+    }
+    
+    function closeResetModal() {
+      document.getElementById('resetModal').classList.add('hidden');
+      resetLicenseKey = '';
+    }
+    
+    async function confirmResetMachine() {
+      try {
+        const { data, error } = await db.rpc('reset_nomu_machine', {
+          p_license_key: resetLicenseKey
+        });
+        
+        if (error) throw error;
+        
+        if (data.success) {
+          alert('PC 등록이 해제되었습니다.');
+          closeResetModal();
+          loadNomuLicenses();
+        } else {
+          throw new Error(data.error);
+        }
+        
+      } catch (error) {
+        console.error('리셋 실패:', error);
+        alert('오류가 발생했습니다: ' + error.message);
+      }
+    }
+    
+    function copyNomuKey() {
+      const key = document.getElementById('nomuGeneratedKey').textContent;
+      navigator.clipboard.writeText(key);
+      alert('복사되었습니다!');
+    }
+    
+    function closeNomuModal() {
+      document.getElementById('nomuModal').classList.add('hidden');
+    }
+    
+    document.getElementById('nomuSearchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loadNomuLicenses();
+    });
+    
+    // ============================================
+    // 페이지 로드
+    // ============================================
     loadLicenses();
   </script>
 </body>
