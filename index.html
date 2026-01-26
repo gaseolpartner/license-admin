@@ -10,10 +10,6 @@
     .tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .status-active { background: #d1fae5; color: #065f46; }
-    .status-inactive { background: #fef3c7; color: #92400e; }
-    .status-expired { background: #fee2e2; color: #991b1b; }
-    .status-revoked { background: #f3f4f6; color: #6b7280; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -210,9 +206,37 @@
             </h2>
             
             <div class="flex gap-2">
+              <select id="nomuStatusFilter" onchange="loadNomuLicenses()" 
+                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none">
+                <option value="all">전체 상태</option>
+                <option value="active">활성</option>
+                <option value="pending">대기</option>
+                <option value="expired">만료</option>
+                <option value="revoked">취소</option>
+              </select>
               <input type="text" id="nomuSearchInput" placeholder="검색..."
                 class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
               <button onclick="loadNomuLicenses()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">🔄</button>
+            </div>
+          </div>
+
+          <!-- 통계 카드 -->
+          <div class="grid grid-cols-4 gap-3 mb-6">
+            <div class="bg-gray-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-total" class="text-2xl font-bold text-gray-700">0</div>
+              <div class="text-xs text-gray-500">전체</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-active" class="text-2xl font-bold text-green-600">0</div>
+              <div class="text-xs text-gray-500">활성</div>
+            </div>
+            <div class="bg-yellow-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-pending" class="text-2xl font-bold text-yellow-600">0</div>
+              <div class="text-xs text-gray-500">대기</div>
+            </div>
+            <div class="bg-red-50 rounded-lg p-3 text-center">
+              <div id="nomu-stat-expired" class="text-2xl font-bold text-red-600">0</div>
+              <div class="text-xs text-gray-500">만료</div>
             </div>
           </div>
 
@@ -313,182 +337,218 @@
       </div>
     </div>
 
-  </div>
-
-  <!-- ============================================== -->
-  <!-- 모달들 -->
-  <!-- ============================================== -->
-  
-  <!-- 스케치업 라이선스 발급 완료 모달 -->
-  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-      <h3 class="text-2xl font-bold text-center mb-4">🎉 발급 완료!</h3>
-      <div class="bg-gray-100 rounded-lg p-4 mb-4">
-        <p class="text-sm text-gray-500 mb-1">라이선스 키</p>
-        <p id="generatedKey" class="text-xl font-mono font-bold text-center break-all"></p>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="copyKey()" class="flex-1 py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600">
-          📋 복사
-        </button>
-        <button onclick="closeModal()" class="flex-1 py-2 bg-gray-200 font-bold rounded-lg hover:bg-gray-300">
-          닫기
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 노무대장 라이선스 발급 완료 모달 -->
-  <div id="nomuModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-      <h3 class="text-2xl font-bold text-center mb-4">🎉 노무대장 라이선스 발급 완료!</h3>
-      <div class="bg-purple-50 rounded-lg p-4 mb-4">
-        <p class="text-sm text-gray-500 mb-1">라이선스 키</p>
-        <p id="nomuGeneratedKey" class="text-xl font-mono font-bold text-center text-purple-700 break-all"></p>
-        <p id="nomuExpiryInfo" class="text-sm text-center text-gray-500 mt-2"></p>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="copyNomuKey()" class="flex-1 py-2 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600">
-          📋 복사
-        </button>
-        <button onclick="closeNomuModal()" class="flex-1 py-2 bg-gray-200 font-bold rounded-lg hover:bg-gray-300">
-          닫기
-        </button>
+    <!-- 발급 완료 모달 (스케치업) -->
+    <div id="modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div class="text-center">
+          <div class="text-6xl mb-4">🎉</div>
+          <h3 class="text-2xl font-bold mb-2">라이선스 발급 완료!</h3>
+          <p class="text-gray-600 mb-6">아래 라이선스 키를 고객에게 전달하세요.</p>
+          
+          <div class="bg-gray-100 rounded-xl p-4 mb-6">
+            <code id="generatedKey" class="text-2xl font-bold text-green-600"></code>
+          </div>
+          
+          <div class="flex gap-3">
+            <button onclick="copyKey()" class="flex-1 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600">
+              📋 복사
+            </button>
+            <button onclick="closeModal()" class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
+              닫기
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- 수량산출 라이선스 발급 완료 모달 -->
-  <div id="suryangModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-      <h3 class="text-2xl font-bold text-center mb-4">🎉 수량산출 라이선스 발급 완료!</h3>
-      <div class="bg-blue-50 rounded-lg p-4 mb-4">
-        <p class="text-sm text-gray-500 mb-1">라이선스 키</p>
-        <p id="suryangGeneratedKey" class="text-xl font-mono font-bold text-center text-blue-700 break-all"></p>
-        <p id="suryangExpiryInfo" class="text-sm text-center text-gray-500 mt-2"></p>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="copySuryangKey()" class="flex-1 py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600">
-          📋 복사
-        </button>
-        <button onclick="closeSuryangModal()" class="flex-1 py-2 bg-gray-200 font-bold rounded-lg hover:bg-gray-300">
-          닫기
-        </button>
+    <!-- 발급 완료 모달 (노무대장) -->
+    <div id="nomuModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div class="text-center">
+          <div class="text-6xl mb-4">🎉</div>
+          <h3 class="text-2xl font-bold mb-2">노무대장 라이선스 발급!</h3>
+          <p class="text-gray-600 mb-6">아래 라이선스 키를 고객에게 전달하세요.</p>
+          
+          <div class="bg-purple-50 rounded-xl p-4 mb-4">
+            <code id="nomuGeneratedKey" class="text-2xl font-bold text-purple-600"></code>
+          </div>
+          
+          <div id="nomuExpiryInfo" class="text-sm text-gray-600 mb-6"></div>
+          
+          <div class="flex gap-3">
+            <button onclick="copyNomuKey()" class="flex-1 py-3 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600">
+              📋 복사
+            </button>
+            <button onclick="closeNomuModal()" class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
+              닫기
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- PC 리셋 확인 모달 -->
-  <div id="resetModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-      <h3 class="text-xl font-bold text-center mb-4">⚠️ PC 등록 해제</h3>
-      <p class="text-center text-gray-600 mb-6">이 라이선스의 PC 등록을 해제하시겠습니까?<br>다른 PC에서 다시 인증할 수 있게 됩니다.</p>
-      <div class="flex gap-2">
-        <button onclick="confirmResetMachine()" class="flex-1 py-2 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600">
-          해제
-        </button>
-        <button onclick="closeResetModal()" class="flex-1 py-2 bg-gray-200 font-bold rounded-lg hover:bg-gray-300">
-          취소
-        </button>
+    <!-- PC 리셋 확인 모달 -->
+    <div id="resetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div class="text-center">
+          <div class="text-6xl mb-4">🔄</div>
+          <h3 class="text-2xl font-bold mb-2">PC 등록 해제</h3>
+          <p class="text-gray-600 mb-6">이 라이선스의 PC 등록을 해제하시겠습니까?<br>사용자가 새 PC에서 다시 활성화할 수 있습니다.</p>
+          
+          <div class="flex gap-3">
+            <button onclick="confirmResetMachine()" class="flex-1 py-3 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600">
+              해제하기
+            </button>
+            <button onclick="closeResetModal()" class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
+              취소
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- 수량산출 발급 완료 모달 -->
+    <div id="suryangModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <h3 class="text-2xl font-bold text-center mb-4">🎉 수량산출 라이선스 발급 완료!</h3>
+        <div class="bg-blue-50 rounded-lg p-4 mb-4">
+          <p class="text-sm text-gray-500 mb-1">라이선스 키</p>
+          <p id="suryangGeneratedKey" class="text-xl font-mono font-bold text-center text-blue-700 break-all"></p>
+          <p id="suryangExpiryInfo" class="text-sm text-center text-gray-500 mt-2"></p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="copySuryangKey()" class="flex-1 py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600">
+            📋 복사
+          </button>
+          <button onclick="closeSuryangModal()" class="flex-1 py-2 bg-gray-200 font-bold rounded-lg hover:bg-gray-300">
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
     // ============================================
-    // Supabase 초기화
+    // Supabase 설정
     // ============================================
-    const SUPABASE_URL = 'https://fyzkinpvqirphyajdsni.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5emtpbnB2cWlycGh5YWpkc25pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1MTgyMjYsImV4cCI6MjA1MzA5NDIyNn0.tOPRCKJ4uYcHzxGS4rMXeYqqq56sNb1fB-eTbLfejQM';
+    const SUPABASE_URL = 'https://uyrbyahnudzkptmnxwdi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cmJ5YWhudWR6a3B0bW54d2RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTgxODcsImV4cCI6MjA4MTA3NDE4N30.oYto7MDhhfC6IovWfBUJzIsgA72YeFHJ82YM3gkskPo';
     
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SECRET = 'GASEOL_PARTNER_2025';
+    
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ============================================
     // 탭 전환
     // ============================================
     function switchTab(tab) {
-      // 모든 탭 버튼 비활성화
+      // 버튼 스타일
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      // 모든 컨텐츠 숨김
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
       
-      // 선택된 탭 활성화
-      document.getElementById('tab-' + tab).classList.add('active');
-      document.getElementById('content-' + tab).classList.add('active');
+      // 컨텐츠 표시
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(`content-${tab}`).classList.add('active');
       
       // 데이터 로드
-      if (tab === 'sketchup') loadLicenses();
-      else if (tab === 'nomu') loadNomuLicenses();
-      else if (tab === 'suryang') loadSuryangLicenses();
+      if (tab === 'nomu') {
+        loadNomuLicenses();
+      } else if (tab === 'suryang') {
+        loadSuryangLicenses();
+      }
     }
     
     // ============================================
-    // 스케치업 플러그인 기능
+    // 스케치업 라이선스 (기존)
     // ============================================
+    async function generateLicenseKey(hardwareId) {
+      const normalized = hardwareId.trim().toUpperCase();
+      const data = new TextEncoder().encode(normalized + SECRET);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const key = hashHex.substring(0, 16).toUpperCase();
+      return key.match(/.{4}/g).join('-');
+    }
+    
     async function loadLicenses() {
+      const search = document.getElementById('searchInput').value;
+      
       try {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        let query = db
+          .from('licenses')
+          .select('*')
+          .order('created_at', { ascending: false });
         
-        let query = db.from('licenses').select('*').order('created_at', { ascending: false });
-        
-        const { data, error } = await query;
-        if (error) throw error;
-        
-        let filtered = data;
-        if (searchTerm) {
-          filtered = data.filter(l => 
-            (l.customer_name || '').toLowerCase().includes(searchTerm) ||
-            (l.company_name || '').toLowerCase().includes(searchTerm) ||
-            (l.license_key || '').toLowerCase().includes(searchTerm)
-          );
+        if (search) {
+          query = query.or(`customer_name.ilike.%${search}%,hardware_id.ilike.%${search}%,company_name.ilike.%${search}%`);
         }
         
-        document.getElementById('licenseCount').textContent = `(${filtered.length}건)`;
+        const { data, error } = await query;
         
-        if (filtered.length === 0) {
-          document.getElementById('licenseList').innerHTML = '<p class="text-center text-gray-500 py-8">등록된 라이선스가 없습니다.</p>';
+        if (error) throw error;
+        
+        document.getElementById('licenseCount').textContent = `(${data.length}건)`;
+        
+        if (data.length === 0) {
+          document.getElementById('licenseList').innerHTML = '<p class="text-center text-gray-500 py-8">발급된 라이선스가 없습니다.</p>';
           return;
         }
         
-        let html = `<table class="w-full text-sm">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left py-2 px-2">고객/회사</th>
-              <th class="text-left py-2 px-2">HW ID</th>
-              <th class="text-left py-2 px-2">제품</th>
-              <th class="text-left py-2 px-2">상태</th>
-              <th class="text-left py-2 px-2">발급일</th>
-              <th class="text-left py-2 px-2">관리</th>
-            </tr>
-          </thead>
-          <tbody>`;
+        let html = `
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-left">
+                <th class="py-3 px-2">고객</th>
+                <th class="py-3 px-2">하드웨어 ID</th>
+                <th class="py-3 px-2">라이선스 키</th>
+                <th class="py-3 px-2">제품</th>
+                <th class="py-3 px-2">상태</th>
+                <th class="py-3 px-2">발급일</th>
+                <th class="py-3 px-2">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
         
-        filtered.forEach(license => {
-          const statusColors = {
-            active: 'status-active',
-            revoked: 'status-revoked'
-          };
-          const statusLabels = {
-            active: '✅ 활성',
-            revoked: '🚫 취소'
-          };
+        data.forEach(license => {
+          const productLabel = license.product_type === 'all' ? '전체' : 
+                              license.product_type === 'scaffold' ? '비계' : '동바리';
+          const productColor = license.product_type === 'all' ? 'bg-purple-100 text-purple-800' : 
+                              license.product_type === 'scaffold' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800';
           
           html += `
-            <tr class="border-b hover:bg-gray-50">
-              <td class="py-2 px-2">
-                <div class="font-medium">${license.customer_name || '-'}</div>
-                <div class="text-xs text-gray-500">${license.company_name || '-'}</div>
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+              <td class="py-3 px-2">
+                <div class="font-medium">${license.customer_name}</div>
+                ${license.company_name ? `<div class="text-xs text-gray-500">${license.company_name}</div>` : ''}
               </td>
-              <td class="py-2 px-2 font-mono text-xs">${license.hardware_id || '-'}</td>
-              <td class="py-2 px-2 text-xs">${license.product_type || 'all'}</td>
-              <td class="py-2 px-2">
-                <span class="text-xs px-2 py-1 rounded ${statusColors[license.status] || ''}">${statusLabels[license.status] || license.status}</span>
+              <td class="py-3 px-2">
+                <code class="text-xs bg-gray-100 px-2 py-1 rounded">${license.hardware_id}</code>
               </td>
-              <td class="py-2 px-2 text-xs">${new Date(license.created_at).toLocaleDateString('ko-KR')}</td>
-              <td class="py-2 px-2">
-                ${license.status !== 'revoked' ? `
-                  <button onclick="revokeSketchupLicense('${license.id}')" class="text-red-500 hover:text-red-700 text-xs">🚫</button>
-                ` : ''}
+              <td class="py-3 px-2">
+                <div class="flex items-center gap-1">
+                  <code class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-bold">${license.license_key}</code>
+                  <button onclick="copyToClipboard('${license.license_key}')" class="text-gray-400 hover:text-gray-600" title="복사">📋</button>
+                </div>
+              </td>
+              <td class="py-3 px-2">
+                <span class="text-xs px-2 py-1 rounded ${productColor}">${productLabel}</span>
+              </td>
+              <td class="py-3 px-2">
+                <button onclick="toggleActive('${license.id}', ${license.is_active})" 
+                  class="text-xs px-2 py-1 rounded ${license.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                  ${license.is_active ? '✅ 활성' : '❌ 비활성'}
+                </button>
+              </td>
+              <td class="py-3 px-2 text-xs text-gray-500">
+                ${new Date(license.created_at).toLocaleDateString('ko-KR')}
+              </td>
+              <td class="py-3 px-2">
+                <button onclick="deleteLicense('${license.id}')" class="text-red-500 hover:text-red-700 text-xs">🗑️</button>
               </td>
             </tr>
           `;
@@ -507,34 +567,52 @@
       e.preventDefault();
       
       const customer_name = document.getElementById('customer_name').value;
-      const company_name = document.getElementById('company_name').value;
       const hardware_id = document.getElementById('hardware_id').value.toUpperCase();
+      const company_name = document.getElementById('company_name').value;
       const customer_phone = document.getElementById('customer_phone').value;
       const customer_email = document.getElementById('customer_email').value;
       const product_type = document.getElementById('product_type').value;
       const notes = document.getElementById('notes').value;
       
+      if (hardware_id.length !== 16) {
+        alert('하드웨어 ID는 16자리여야 합니다.');
+        return;
+      }
+      
       try {
-        const { data, error } = await db.rpc('generate_license', {
-          p_customer_name: customer_name,
-          p_company_name: company_name || null,
-          p_hardware_id: hardware_id,
-          p_customer_email: customer_email || null,
-          p_customer_phone: customer_phone || null,
-          p_product_type: product_type,
-          p_notes: notes || null
-        });
+        const { data: existing } = await db
+          .from('licenses')
+          .select('id')
+          .eq('hardware_id', hardware_id)
+          .single();
+        
+        if (existing) {
+          alert('이미 등록된 하드웨어 ID입니다.');
+          return;
+        }
+        
+        const license_key = await generateLicenseKey(hardware_id);
+        
+        const { error } = await db
+          .from('licenses')
+          .insert({
+            customer_name,
+            hardware_id,
+            license_key,
+            company_name: company_name || null,
+            customer_phone: customer_phone || null,
+            customer_email: customer_email || null,
+            product_type,
+            notes: notes || null,
+            is_active: true
+          });
         
         if (error) throw error;
         
-        if (data.success) {
-          document.getElementById('generatedKey').textContent = data.license_key;
-          document.getElementById('modal').classList.remove('hidden');
-          document.getElementById('licenseForm').reset();
-          loadLicenses();
-        } else {
-          throw new Error(data.error || '발급 실패');
-        }
+        document.getElementById('generatedKey').textContent = license_key;
+        document.getElementById('modal').classList.remove('hidden');
+        document.getElementById('licenseForm').reset();
+        loadLicenses();
         
       } catch (error) {
         console.error('발급 오류:', error);
@@ -542,21 +620,39 @@
       }
     });
     
-    async function revokeSketchupLicense(id) {
-      if (!confirm('이 라이선스를 취소하시겠습니까?')) return;
-      
+    async function toggleActive(id, currentStatus) {
       try {
         const { error } = await db
           .from('licenses')
-          .update({ status: 'revoked' })
+          .update({ is_active: !currentStatus })
           .eq('id', id);
         
         if (error) throw error;
         loadLicenses();
-        
       } catch (error) {
         alert('오류가 발생했습니다.');
       }
+    }
+    
+    async function deleteLicense(id) {
+      if (!confirm('정말 삭제하시겠습니까?')) return;
+      
+      try {
+        const { error } = await db
+          .from('licenses')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        loadLicenses();
+      } catch (error) {
+        alert('오류가 발생했습니다.');
+      }
+    }
+    
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert('복사되었습니다!');
     }
     
     function copyKey() {
@@ -574,7 +670,7 @@
     });
     
     // ============================================
-    // 노무대장 기능
+    // 노무대장 라이선스
     // ============================================
     function updateNomuDuration() {
       const type = document.getElementById('nomu_license_type').value;
@@ -594,90 +690,126 @@
     }
     
     async function loadNomuLicenses() {
+      const search = document.getElementById('nomuSearchInput').value;
+      const statusFilter = document.getElementById('nomuStatusFilter').value;
+      
       try {
-        const searchTerm = document.getElementById('nomuSearchInput').value.toLowerCase();
-        
-        const { data, error } = await db
+        let query = db
           .from('nomu_licenses')
           .select('*')
           .order('created_at', { ascending: false });
         
-        if (error) throw error;
-        
-        let filtered = data;
-        if (searchTerm) {
-          filtered = data.filter(l => 
-            (l.company_name || '').toLowerCase().includes(searchTerm) ||
-            (l.user_name || '').toLowerCase().includes(searchTerm) ||
-            (l.license_key || '').toLowerCase().includes(searchTerm)
-          );
+        if (statusFilter !== 'all') {
+          query = query.eq('status', statusFilter);
         }
         
-        document.getElementById('nomuLicenseCount').textContent = `(${filtered.length}건)`;
+        if (search) {
+          query = query.or(`license_key.ilike.%${search}%,company_name.ilike.%${search}%,user_name.ilike.%${search}%`);
+        }
         
-        if (filtered.length === 0) {
-          document.getElementById('nomuLicenseList').innerHTML = '<p class="text-center text-gray-500 py-8">등록된 라이선스가 없습니다.</p>';
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        // 통계 업데이트
+        const allData = await db.from('nomu_licenses').select('status');
+        if (allData.data) {
+          document.getElementById('nomu-stat-total').textContent = allData.data.length;
+          document.getElementById('nomu-stat-active').textContent = allData.data.filter(l => l.status === 'active').length;
+          document.getElementById('nomu-stat-pending').textContent = allData.data.filter(l => l.status === 'pending').length;
+          document.getElementById('nomu-stat-expired').textContent = allData.data.filter(l => l.status === 'expired').length;
+        }
+        
+        document.getElementById('nomuLicenseCount').textContent = `(${data.length}건)`;
+        
+        if (data.length === 0) {
+          document.getElementById('nomuLicenseList').innerHTML = '<p class="text-center text-gray-500 py-8">발급된 라이선스가 없습니다.</p>';
           return;
         }
         
-        const typeLabels = { monthly: '월간', yearly: '연간', permanent: '영구' };
-        const statusColors = { active: 'status-active', inactive: 'status-inactive', expired: 'status-expired', revoked: 'status-revoked' };
-        const statusLabels = { active: '✅ 활성', inactive: '⏸️ 비활성', expired: '⏰ 만료', revoked: '🚫 취소' };
+        let html = `
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-left">
+                <th class="py-3 px-2">라이선스 키</th>
+                <th class="py-3 px-2">회사/사용자</th>
+                <th class="py-3 px-2">타입</th>
+                <th class="py-3 px-2">상태</th>
+                <th class="py-3 px-2">만료일</th>
+                <th class="py-3 px-2">PC</th>
+                <th class="py-3 px-2">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
         
-        let html = `<table class="w-full text-sm">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left py-2 px-2">라이선스 키</th>
-              <th class="text-left py-2 px-2">회사/사용자</th>
-              <th class="text-left py-2 px-2">타입</th>
-              <th class="text-left py-2 px-2">상태</th>
-              <th class="text-left py-2 px-2">만료일</th>
-              <th class="text-left py-2 px-2">PC</th>
-              <th class="text-left py-2 px-2">관리</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        
-        filtered.forEach(license => {
-          const now = new Date();
-          const expiry = license.expires_at ? new Date(license.expires_at) : null;
-          const daysLeft = expiry ? Math.ceil((expiry - now) / (1000 * 60 * 60 * 24)) : null;
+        data.forEach(license => {
+          const statusColors = {
+            pending: 'bg-yellow-100 text-yellow-800',
+            active: 'bg-green-100 text-green-800',
+            expired: 'bg-red-100 text-red-800',
+            revoked: 'bg-gray-100 text-gray-800'
+          };
+          const statusLabels = {
+            pending: '대기',
+            active: '활성',
+            expired: '만료',
+            revoked: '취소'
+          };
+          const typeLabels = {
+            monthly: '월간',
+            yearly: '연간',
+            permanent: '영구'
+          };
+          
+          // 남은 일수 계산
           let daysRemaining = '';
-          if (daysLeft !== null) {
-            if (daysLeft < 0) daysRemaining = '<span class="text-red-500 text-xs">만료됨</span>';
-            else if (daysLeft <= 7) daysRemaining = `<span class="text-orange-500 text-xs">${daysLeft}일 남음</span>`;
-            else daysRemaining = `<span class="text-gray-500 text-xs">${daysLeft}일 남음</span>`;
+          if (license.expires_at) {
+            const now = new Date();
+            const expiry = new Date(license.expires_at);
+            const diff = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+            if (diff < 0) {
+              daysRemaining = `<span class="text-red-500">${Math.abs(diff)}일 경과</span>`;
+            } else if (diff <= 7) {
+              daysRemaining = `<span class="text-orange-500">${diff}일 남음</span>`;
+            } else {
+              daysRemaining = `<span class="text-green-500">${diff}일 남음</span>`;
+            }
+          } else {
+            daysRemaining = '<span class="text-gray-500">무제한</span>';
           }
           
           html += `
-            <tr class="border-b hover:bg-gray-50">
-              <td class="py-2 px-2 font-mono text-xs">${license.license_key}</td>
-              <td class="py-2 px-2">
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+              <td class="py-3 px-2">
+                <div class="flex items-center gap-1">
+                  <code class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-bold">${license.license_key}</code>
+                  <button onclick="copyToClipboard('${license.license_key}')" class="text-gray-400 hover:text-gray-600">📋</button>
+                </div>
+              </td>
+              <td class="py-3 px-2">
                 <div class="font-medium">${license.company_name || '-'}</div>
                 <div class="text-xs text-gray-500">${license.user_name || '-'}</div>
               </td>
-              <td class="py-2 px-2 text-xs">${typeLabels[license.license_type] || license.license_type}</td>
-              <td class="py-2 px-2">
+              <td class="py-3 px-2">
+                <span class="text-xs">${typeLabels[license.license_type] || license.license_type}</span>
+              </td>
+              <td class="py-3 px-2">
                 <span class="text-xs px-2 py-1 rounded ${statusColors[license.status]}">${statusLabels[license.status]}</span>
               </td>
-              <td class="py-2 px-2 text-xs">
+              <td class="py-3 px-2 text-xs">
                 ${license.expires_at ? new Date(license.expires_at).toLocaleDateString('ko-KR') : '무제한'}<br>
                 ${daysRemaining}
               </td>
-              <td class="py-2 px-2">
+              <td class="py-3 px-2">
                 ${license.machine_id ? `
-                  <span class="text-green-500 text-xs">✅</span>
-                  <button onclick="showResetModal('nomu', '${license.license_key}')" class="text-orange-500 hover:text-orange-700 text-xs ml-1">🔄</button>
-                ` : '<span class="text-gray-400 text-xs">-</span>'}
+                  <span class="text-green-500 text-xs">✅ 등록</span>
+                  <button onclick="showResetModal('${license.license_key}')" class="text-orange-500 hover:text-orange-700 text-xs ml-1" title="PC 해제">🔄</button>
+                ` : '<span class="text-gray-400 text-xs">미등록</span>'}
               </td>
-              <td class="py-2 px-2">
+              <td class="py-3 px-2">
                 <div class="flex gap-1">
                   <button onclick="extendNomuLicense('${license.id}', 30)" class="text-blue-500 hover:text-blue-700 text-xs" title="+30일">➕</button>
-                  ${license.status === 'active' ? `
-                    <button onclick="toggleNomuStatus('${license.id}', 'inactive')" class="text-yellow-500 hover:text-yellow-700 text-xs" title="비활성화">⏸️</button>
-                  ` : license.status === 'inactive' ? `
-                    <button onclick="toggleNomuStatus('${license.id}', 'active')" class="text-green-500 hover:text-green-700 text-xs" title="활성화">▶️</button>
-                  ` : ''}
                   ${license.status !== 'revoked' ? `
                     <button onclick="revokeNomuLicense('${license.id}')" class="text-red-500 hover:text-red-700 text-xs" title="취소">🚫</button>
                   ` : ''}
@@ -696,6 +828,7 @@
       }
     }
     
+    // 노무대장 라이선스 발급
     document.getElementById('nomuLicenseForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -738,44 +871,99 @@
       }
     });
     
+    // 노무대장 라이선스 연장
     async function extendNomuLicense(id, days) {
       if (!confirm(`${days}일 연장하시겠습니까?`)) return;
       
       try {
-        const { data: license } = await db.from('nomu_licenses').select('expires_at').eq('id', id).single();
+        // 현재 라이선스 조회
+        const { data: license, error: fetchError } = await db
+          .from('nomu_licenses')
+          .select('expires_at')
+          .eq('id', id)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
         const currentExpiry = license.expires_at ? new Date(license.expires_at) : new Date();
         const newExpiry = new Date(currentExpiry);
         newExpiry.setDate(newExpiry.getDate() + days);
         
-        await db.from('nomu_licenses').update({ expires_at: newExpiry.toISOString(), status: 'active' }).eq('id', id);
-        alert(`${days}일 연장되었습니다.`);
+        const { error } = await db
+          .from('nomu_licenses')
+          .update({ 
+            expires_at: newExpiry.toISOString(),
+            status: 'active'
+          })
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        alert(`${days}일 연장되었습니다.\n새 만료일: ${newExpiry.toLocaleDateString('ko-KR')}`);
         loadNomuLicenses();
+        
       } catch (error) {
+        console.error('연장 실패:', error);
         alert('오류가 발생했습니다.');
       }
     }
     
-    async function toggleNomuStatus(id, status) {
-      try {
-        await db.from('nomu_licenses').update({ status }).eq('id', id);
-        loadNomuLicenses();
-      } catch (error) {
-        alert('오류가 발생했습니다.');
-      }
-    }
-    
+    // 노무대장 라이선스 취소
     async function revokeNomuLicense(id) {
       if (!confirm('이 라이선스를 취소하시겠습니까?')) return;
+      
       try {
-        await db.from('nomu_licenses').update({ status: 'revoked' }).eq('id', id);
+        const { error } = await db
+          .from('nomu_licenses')
+          .update({ status: 'revoked' })
+          .eq('id', id);
+        
+        if (error) throw error;
         loadNomuLicenses();
+        
       } catch (error) {
         alert('오류가 발생했습니다.');
+      }
+    }
+    
+    // PC 리셋
+    let resetLicenseKey = '';
+    
+    function showResetModal(licenseKey) {
+      resetLicenseKey = licenseKey;
+      document.getElementById('resetModal').classList.remove('hidden');
+    }
+    
+    function closeResetModal() {
+      document.getElementById('resetModal').classList.add('hidden');
+      resetLicenseKey = '';
+    }
+    
+    async function confirmResetMachine() {
+      try {
+        const { data, error } = await db.rpc('reset_nomu_machine', {
+          p_license_key: resetLicenseKey
+        });
+        
+        if (error) throw error;
+        
+        if (data.success) {
+          alert('PC 등록이 해제되었습니다.');
+          closeResetModal();
+          loadNomuLicenses();
+        } else {
+          throw new Error(data.error);
+        }
+        
+      } catch (error) {
+        console.error('리셋 실패:', error);
+        alert('오류가 발생했습니다: ' + error.message);
       }
     }
     
     function copyNomuKey() {
-      navigator.clipboard.writeText(document.getElementById('nomuGeneratedKey').textContent);
+      const key = document.getElementById('nomuGeneratedKey').textContent;
+      navigator.clipboard.writeText(key);
       alert('복사되었습니다!');
     }
     
@@ -788,7 +976,12 @@
     });
     
     // ============================================
-    // 시스템 수량산출 기능 (NEW)
+    // 페이지 로드
+    // ============================================
+    loadLicenses();
+    
+    // ============================================
+    // 시스템 수량산출 기능
     // ============================================
     function updateSuryangDuration() {
       const type = document.getElementById('suryang_license_type').value;
@@ -835,7 +1028,7 @@
         }
         
         const typeLabels = { monthly: '월간', yearly: '연간', permanent: '영구' };
-        const statusColors = { active: 'status-active', inactive: 'status-inactive', expired: 'status-expired', revoked: 'status-revoked' };
+        const statusColors = { active: 'bg-green-100 text-green-800', inactive: 'bg-yellow-100 text-yellow-800', expired: 'bg-red-100 text-red-800', revoked: 'bg-gray-100 text-gray-800' };
         const statusLabels = { active: '✅ 활성', inactive: '⏸️ 비활성', expired: '⏰ 만료', revoked: '🚫 취소' };
         
         let html = `<table class="w-full text-sm">
@@ -882,16 +1075,16 @@
               <td class="py-2 px-2">
                 ${license.machine_id ? `
                   <span class="text-green-500 text-xs">✅</span>
-                  <button onclick="showResetModal('suryang', '${license.license_key}')" class="text-orange-500 hover:text-orange-700 text-xs ml-1" title="PC 해제">🔄</button>
+                  <button onclick="resetSuryangMachine('${license.license_key}')" class="text-orange-500 hover:text-orange-700 text-xs ml-1" title="PC 해제">🔄</button>
                 ` : '<span class="text-gray-400 text-xs">-</span>'}
               </td>
               <td class="py-2 px-2">
                 <div class="flex gap-1">
                   <button onclick="extendSuryangLicense('${license.id}', 30)" class="text-blue-500 hover:text-blue-700 text-xs" title="+30일">➕</button>
                   ${license.status === 'active' ? `
-                    <button onclick="toggleSuryangStatus('${license.id}', 'inactive')" class="text-yellow-500 hover:text-yellow-700 text-xs" title="비활성화 (끄기)">⏸️</button>
+                    <button onclick="toggleSuryangStatus('${license.id}', 'inactive')" class="text-yellow-500 hover:text-yellow-700 text-xs" title="비활성화">⏸️</button>
                   ` : license.status === 'inactive' ? `
-                    <button onclick="toggleSuryangStatus('${license.id}', 'active')" class="text-green-500 hover:text-green-700 text-xs" title="활성화 (켜기)">▶️</button>
+                    <button onclick="toggleSuryangStatus('${license.id}', 'active')" class="text-green-500 hover:text-green-700 text-xs" title="활성화">▶️</button>
                   ` : ''}
                   ${license.status !== 'revoked' ? `
                     <button onclick="revokeSuryangLicense('${license.id}')" class="text-red-500 hover:text-red-700 text-xs" title="취소">🚫</button>
@@ -922,30 +1115,45 @@
       const duration = parseInt(document.getElementById('suryang_duration').value);
       const notes = document.getElementById('suryang_notes').value;
       
+      // 라이선스 키 생성
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const randomPart = () => Array.from({length: 4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      const license_key = `SURY-${randomPart()}-${randomPart()}-${randomPart()}`;
+      
+      // 만료일 계산
+      let expires_at;
+      if (license_type === 'permanent') {
+        expires_at = new Date('2099-12-31');
+      } else {
+        expires_at = new Date();
+        expires_at.setDate(expires_at.getDate() + duration);
+      }
+      
       try {
-        const { data, error } = await db.rpc('generate_suryang_license', {
-          p_company_name: company_name,
-          p_user_name: user_name,
-          p_user_email: user_email || null,
-          p_user_phone: user_phone || null,
-          p_license_type: license_type,
-          p_duration_days: duration,
-          p_notes: notes || null
-        });
+        const { data, error } = await db
+          .from('suryang_licenses')
+          .insert([{
+            license_key,
+            company_name,
+            user_name,
+            user_email: user_email || null,
+            user_phone: user_phone || null,
+            license_type,
+            expires_at: expires_at.toISOString(),
+            notes: notes || null,
+            status: 'active'
+          }])
+          .select();
         
         if (error) throw error;
         
-        if (data.success) {
-          document.getElementById('suryangGeneratedKey').textContent = data.license_key;
-          document.getElementById('suryangExpiryInfo').textContent = data.expires_at 
-            ? `만료일: ${new Date(data.expires_at).toLocaleDateString('ko-KR')}` 
-            : '영구 라이선스';
-          document.getElementById('suryangModal').classList.remove('hidden');
-          document.getElementById('suryangLicenseForm').reset();
-          loadSuryangLicenses();
-        } else {
-          throw new Error(data.error || '발급 실패');
-        }
+        document.getElementById('suryangGeneratedKey').textContent = license_key;
+        document.getElementById('suryangExpiryInfo').textContent = license_type === 'permanent' 
+          ? '영구 라이선스' 
+          : `만료일: ${expires_at.toLocaleDateString('ko-KR')}`;
+        document.getElementById('suryangModal').classList.remove('hidden');
+        document.getElementById('suryangLicenseForm').reset();
+        loadSuryangLicenses();
         
       } catch (error) {
         console.error('발급 오류:', error);
@@ -992,6 +1200,17 @@
       }
     }
     
+    async function resetSuryangMachine(licenseKey) {
+      if (!confirm('이 라이선스의 PC 등록을 해제하시겠습니까?')) return;
+      try {
+        await db.from('suryang_licenses').update({ machine_id: null, activated_at: null }).eq('license_key', licenseKey);
+        alert('PC 등록이 해제되었습니다.');
+        loadSuryangLicenses();
+      } catch (error) {
+        alert('오류가 발생했습니다.');
+      }
+    }
+    
     function copySuryangKey() {
       navigator.clipboard.writeText(document.getElementById('suryangGeneratedKey').textContent);
       alert('복사되었습니다!');
@@ -1004,51 +1223,6 @@
     document.getElementById('suryangSearchInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') loadSuryangLicenses();
     });
-    
-    // ============================================
-    // 공통 - PC 리셋
-    // ============================================
-    let resetTarget = { type: '', key: '' };
-    
-    function showResetModal(type, licenseKey) {
-      resetTarget = { type, key: licenseKey };
-      document.getElementById('resetModal').classList.remove('hidden');
-    }
-    
-    function closeResetModal() {
-      document.getElementById('resetModal').classList.add('hidden');
-      resetTarget = { type: '', key: '' };
-    }
-    
-    async function confirmResetMachine() {
-      try {
-        let rpcName = resetTarget.type === 'suryang' ? 'reset_suryang_machine' : 'reset_nomu_machine';
-        
-        const { data, error } = await db.rpc(rpcName, {
-          p_license_key: resetTarget.key
-        });
-        
-        if (error) throw error;
-        
-        if (data.success) {
-          alert('PC 등록이 해제되었습니다.');
-          closeResetModal();
-          if (resetTarget.type === 'suryang') loadSuryangLicenses();
-          else loadNomuLicenses();
-        } else {
-          throw new Error(data.error);
-        }
-        
-      } catch (error) {
-        console.error('리셋 실패:', error);
-        alert('오류가 발생했습니다: ' + error.message);
-      }
-    }
-    
-    // ============================================
-    // 페이지 로드
-    // ============================================
-    loadLicenses();
   </script>
 </body>
 </html>
