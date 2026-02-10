@@ -1082,6 +1082,7 @@
                   ${license.status !== 'revoked' ? `
                     <button onclick="revokeSuryangLicense('${license.id}')" class="text-red-500 hover:text-red-700 text-xs" title="취소">🚫</button>
                   ` : ''}
+                  <button onclick="deleteSuryangLicense('${license.id}')" class="text-gray-500 hover:text-red-700 text-xs" title="삭제">🗑️</button>
                 </div>
               </td>
             </tr>
@@ -1194,6 +1195,17 @@
     }
     
     // PC 관리 기능 제거됨 (노무대장처럼 키만 관리)
+    
+    async function deleteSuryangLicense(id) {
+      if (!confirm('이 라이선스를 완전히 삭제하시겠습니까?\n(복구 불가)')) return;
+      try {
+        await db.from('suryang_licenses').delete().eq('id', id);
+        alert('삭제되었습니다.');
+        loadSuryangLicenses();
+      } catch (error) {
+        alert('오류가 발생했습니다: ' + error.message);
+      }
+    }
     
     function copySuryangKey() {
       navigator.clipboard.writeText(document.getElementById('suryangGeneratedKey').textContent);
